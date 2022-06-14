@@ -6,8 +6,6 @@ module.exports = {
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
-    'plugin:react-hooks/recommended',
-    'plugin:react/recommended'
   ],
   globals: {
     Atomics: 'readonly',
@@ -17,12 +15,11 @@ module.exports = {
   ignorePatterns: ['build'],
   parser: '@typescript-eslint/parser',
   parserOptions: {
-    ecmaFeatures: { jsx: true },
     ecmaVersion: 2021,
     sourceType: 'module',
     project: './tsconfig.json'
   },
-  plugins: ['@typescript-eslint', 'react'],
+  plugins: ['@typescript-eslint'],
   rules: {
     quotes: ['error', 'single'],
     'arrow-parens': ['error', 'always'],
@@ -45,31 +42,6 @@ module.exports = {
     'no-multiple-empty-lines': 'error',
     'no-whitespace-before-property': 'error',
     'rest-spread-spacing': ['error', 'never'],
-    'react/self-closing-comp': [
-      'error',
-      {
-        component: true,
-        html: true
-      }
-    ],
-    'react/jsx-closing-bracket-location': 1,
-    'react/jsx-closing-bracket-location': [1, 'tag-aligned'],
-    'react/jsx-closing-bracket-location': [1, 'line-aligned'],
-    'react/jsx-curly-newline': [
-      'error',
-      { multiline: 'consistent', singleline: 'consistent' }
-    ],
-    'react/jsx-indent-props': [
-      2,
-      { indentMode: 2, ignoreTernaryOperator: true }
-    ],
-    'react/jsx-tag-spacing': ['error'],
-    // 'react/jsx-newline': [2, { prevent: true }],
-    'react/jsx-indent': [
-      2,
-      2,
-      { indentLogicalExpressions: true, checkAttributes: true }
-    ]
   },
   settings: { react: { version: 'detect' } }
 }
