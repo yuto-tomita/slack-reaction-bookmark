@@ -1,13 +1,11 @@
 import Document, {
-  Head,
   Html,
   Main,
   NextScript,
+  Head,
   DocumentContext,
 } from 'next/document'
 import React from 'react'
-
-// React.useLayoutEffect = React.useEffect
 
 class MyDocument extends Document {
   static async getInitialProps(ctx: DocumentContext) {
