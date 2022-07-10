@@ -1,5 +1,8 @@
 import type { InferGetStaticPropsType } from 'next'
 import Image from 'next/image'
+import useSWR from 'swr'
+import { fetcher } from 'lib/fetcher'
+import axios from 'axios'
 
 export interface SlackReactionData {
   ok: boolean
@@ -74,11 +77,45 @@ const Home = ({ reactionList }: InferGetStaticPropsType<typeof getStaticProps>) 
   // TODO: URLから取得したOGPイメージをカード形式で表示するようにする
   // TODO: ページネーションを実装する一ページ20件ほどにしておく
   // TODO： リポジトリ情報が見やすい形にする
-  console.log(reactionList)
+  const linkClipFromText = (text: string) => {
+    const reg = new RegExp(/https?:\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#\u3000-\u30FE\u4E00-\u9FA0\uFF01-\uFFE3]+/, 'g')
+
+    return text.match(reg)
+  }
+
+  const repoImageFromOgp = (urls: RegExpMatchArray | null) => {
+    if (urls) {
+      // console.log(urls[0].replace(/^([^#]*).*/, "$1").replace(/^[^?]*\??(.*)/, "$1"))
+      const githubUrl = urls.find((val) => val.includes('github'))
+      const url = githubUrl ? new URL(githubUrl) : ''
+      
+      return url as string
+    }
+  }
+
+  const repoImageElement = (val: any) => {
+    const img = repoImageFromOgp(linkClipFromText(val.message.attachments[0].text))
+    return img
+      ? <img src={img} alt="" />
+      : ''
+  }
   return (
-    <h1 className="text-3xl font-bold underline">
-      Hello world!
-    </h1>
+    <div className="border-solid">
+      <ul>
+        {
+          reactionList.map((val, index) => {
+            return (
+              <li key={index} className=" h-10 border-solid border-2 border-gray-300">
+                <div>
+                  {linkClipFromText(val.message.attachments[0].text)}
+                  {repoImageElement(val)}
+                </div>
+              </li>
+            )
+          })
+        }
+      </ul>
+    </div>
   )
 }
 
