@@ -93,8 +93,13 @@ const Home = ({ reactionList }: InferGetStaticPropsType<typeof getStaticProps>) 
     }
   }
 
-  const repoImageElement = (val: any) => {
+  const repoImageElement = async(val: any) => {
     const img = repoImageFromOgp(linkClipFromText(val.message.attachments[0].text))
+    if (img) {
+      const u = encodeURI(img)
+      const res = await axios.get(u, { headers: { 'User-Agent': 'bot' } })
+      console.log(res.data)
+    }
     return img
       ? <img src={img} alt="" />
       : ''
@@ -107,7 +112,7 @@ const Home = ({ reactionList }: InferGetStaticPropsType<typeof getStaticProps>) 
             return (
               <li key={index} className=" h-10 border-solid border-2 border-gray-300">
                 <div>
-                  {linkClipFromText(val.message.attachments[0].text)}
+                  {/* {linkClipFromText(val.message.attachments[0].text)} */}
                   {repoImageElement(val)}
                 </div>
               </li>
