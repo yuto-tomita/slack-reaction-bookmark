@@ -27,6 +27,7 @@
     // "max-len": ["error", { "code": 70 }],
     "arrow-parens": ["error", "always"],
     "no-empty-function": "error",
+    "no-useless-escape": "off",
     // "no-console": "error",
     "valid-typeof": "error",
     "keyword-spacing": ["error", { "before": true }],
