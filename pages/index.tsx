@@ -1,8 +1,4 @@
 import type { InferGetStaticPropsType } from 'next'
-import Image from 'next/image'
-import useSWR from 'swr'
-import { fetcher } from 'lib/fetcher'
-import axios from 'axios'
 
 export interface SlackReactionData {
   ok: boolean
@@ -61,60 +57,88 @@ export async function getStaticProps() {
       Authorization: `Bearer ${process.env.BOT_USER_OAUTH_TOKEN}`,
     }
   })
-
   const reactionList: SlackReactionData = await res.json()
-  console.log(reactionList.items[0].message.attachments)
-  console.log(reactionList.items[0].message.reactions)
+
+  const findRepoUrlFromGithubUrl = async(text: string) => {
+    const urlReg = new RegExp(/https?:\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#\u3000-\u30FE\u4E00-\u9FA0\uFF01-\uFFE3]+/, 'g')
+    const githubUrl = text.match(urlReg)
+
+    if (githubUrl) {
+      const u = encodeURI(githubUrl[0])
+      const res = await fetch(u, {
+        headers: {
+          'User-Agent': 'bot',
+          'Content-Type': 'text/html'
+        }
+      })
+
+      const html = await res.text()
+
+      const metaImageTagReg = new RegExp(/<meta property="og:image" content="(.*?)"/, 'g')
+      const metaImageTag = html.match(metaImageTagReg)
+
+      const repoTitleTagReg = new RegExp(/<meta property="og:title" content="(.*?)"/, 'g')
+      const repoTitle = html.match(repoTitleTagReg)
+
+      if (metaImageTag && repoTitle) {
+        const imageUrl = metaImageTag[0].substring(35, metaImageTag[0].length - 1)
+
+        return {
+          imageUrl,
+          repoTitle: repoTitle[0].substring(35, repoTitle[0].length - 1)
+        }
+      } else {
+        return {
+          imageUrl: null,
+          repoTitle: null
+        }
+      }
+    } else {
+      return {
+        imageUrl: null,
+        repoTitle: null
+      }
+    }
+  }
+
+  const displayData = async() => {
+    let tmp: { imageUrl: string, repoTitle: string }[]
+
+    const starRepos = reactionList.items.map(async(val) => await findRepoUrlFromGithubUrl(val.message.attachments[0].text))
+
+    await Promise.all(starRepos).then((val) => {
+      tmp = val
+    })
+
+    return tmp
+  }
+  const data = await displayData()
+  console.log(data)
+
   return {
     props: {
-      reactionList: reactionList.items
+      displayData: data
     }
   }
 }
 
-const Home = ({ reactionList }: InferGetStaticPropsType<typeof getStaticProps>) => {
+const Home = ({ displayData }: InferGetStaticPropsType<typeof getStaticProps>) => {
   // TODO: URLからOGPイメージを取得するようにする
   // TODO: URLから取得したOGPイメージをカード形式で表示するようにする
   // TODO: ページネーションを実装する一ページ20件ほどにしておく
   // TODO： リポジトリ情報が見やすい形にする
-  const linkClipFromText = (text: string) => {
-    const reg = new RegExp(/https?:\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#\u3000-\u30FE\u4E00-\u9FA0\uFF01-\uFFE3]+/, 'g')
-
-    return text.match(reg)
-  }
-
-  const repoImageFromOgp = (urls: RegExpMatchArray | null) => {
-    if (urls) {
-      // console.log(urls[0].replace(/^([^#]*).*/, "$1").replace(/^[^?]*\??(.*)/, "$1"))
-      const githubUrl = urls.find((val) => val.includes('github'))
-      const url = githubUrl ? new URL(githubUrl) : ''
-      
-      return url as string
-    }
-  }
-
-  const repoImageElement = async(val: any) => {
-    const img = repoImageFromOgp(linkClipFromText(val.message.attachments[0].text))
-    if (img) {
-      const u = encodeURI(img)
-      const res = await axios.get(u, { headers: { 'User-Agent': 'bot' } })
-      console.log(res.data)
-    }
-    return img
-      ? <img src={img} alt="" />
-      : ''
-  }
+  console.log(displayData)
   return (
     <div className="border-solid">
       <ul>
         {
-          reactionList.map((val, index) => {
+          displayData.map((val, index) => {
             return (
-              <li key={index} className=" h-10 border-solid border-2 border-gray-300">
-                <div>
-                  {/* {linkClipFromText(val.message.attachments[0].text)} */}
-                  {repoImageElement(val)}
-                </div>
+              <li key={index} className="h-60 border-solid border-2 border-gray-300">
+                {val.repoTitle ? <span>{val.repoTitle}</span> : ''}
+                {/* <span>{val.repoTitle}</span> */}
+                {val.imageUrl ? <img src={val.imageUrl} width="300px" height="800" /> : ''}
+                {/* {val.imageUrl} */}
               </li>
             )
           })
